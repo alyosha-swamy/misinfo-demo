@@ -78,15 +78,14 @@ def run_script(user_inputs):
 def get_analysis_and_score(user_input):
     stdout_lines, stderr = run_script([user_input])
     for idx, stdout in enumerate(stdout_lines):
-        if is_json(stdout): 
+        if is_json(stdout):
             output_json = json.loads(stdout)
-            gpt_answer = output_json['gpt-answer']
+            gpt_answer = output_json.get('gpt-answer', "")
             if " | " in gpt_answer:
                 analysis, score = gpt_answer.split(" | ")
-            else:
-                analysis = gpt_answer
-                score = "Score not provided"
-    return analysis, score
+                return analysis, score
+    return "No analysis found.", "No score provided."
+
 
 
 @st.cache(suppress_st_warning=True)
