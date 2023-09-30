@@ -72,6 +72,7 @@ def run_script(user_inputs):
         os.remove(input_file)
 
     return stdout.splitlines(), stderr
+<<<<<<< HEAD
 from openai_example_parallel import process_requests
 
 def get_analysis_and_score(user_input):
@@ -96,6 +97,24 @@ def get_analysis_and_score(user_input):
     return "No analysis found.", "No score provided."
 
 
+=======
+
+
+@st.cache(allow_output_mutation=True)
+def get_analysis_and_score(user_input):
+    stdout_lines, stderr = run_script([user_input])
+    for idx, stdout in enumerate(stdout_lines):
+        if is_json(stdout):
+            output_json = json.loads(stdout)
+            gpt_answer = output_json.get('gpt-answer', "")
+            if " | " in gpt_answer:
+                analysis, score = gpt_answer.split(" | ")
+                return analysis, score
+    return "No analysis found.", "No score provided."
+
+
+
+>>>>>>> 777998b5dec32e8b4a04a2125071bda070072c45
 @st.cache(suppress_st_warning=True)
 def collect_feedback():
     feedback_questions = [
