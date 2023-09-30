@@ -8,7 +8,18 @@ from contextlib import contextmanager
 from threading import current_thread
 from io import StringIO
 
+
 REPORT_CONTEXT_ATTR_NAME = "_report_ctx"
+
+def initialize_session_state():
+    session_state_keys = ['feedback_responses', 'user_input', 'analysis', 'score', 'upvotes', 'downvotes', 'form_submitted']
+    default_values = [[], '', '', '', 0, 0, False]
+
+    for key, default in zip(session_state_keys, default_values):
+        if key not in st.session_state:
+            st.session_state[key] = default
+
+initialize_session_state()
 
 
 if 'feedback_responses' not in st.session_state:
@@ -59,7 +70,7 @@ def st_stderr(dst):
         yield
 
 def run_script(user_inputs):
-    
+
     input_df = pd.DataFrame([{"text": text} for text in user_inputs])
     input_file = 'input_temp.jsonl'
     with open(input_file, 'w') as f:

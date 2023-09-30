@@ -103,6 +103,9 @@ import time
 from dataclasses import dataclass
 import argparse
 import aiohttp
+from dotenv import load_dotenv
+load_dotenv()
+
 
 async def process_api_requests_from_file(
     requests_filepath: str,
@@ -389,7 +392,7 @@ def task_id_generator_function():
 # run script
 
 def process_requests(input_file, request_url="https://api.openai.com/v1/chat/completions", 
-                    api_key="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", 
+                    api_key=os.getenv("API_KEY"), 
                      max_requests_per_minute=200 * 0.9, max_tokens_per_minute=40_000 * 0.9, 
                     token_encoding_name="cl100k_base", max_attempts=30, logging_level=logging.INFO):
 
