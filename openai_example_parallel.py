@@ -388,23 +388,10 @@ def task_id_generator_function():
 
 # run script
 
-
-if __name__ == "__main__":
-    # parse command line arguments
-    # or set the defaults here and forget about them
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--input_file", required=True, help="Path to the input JSONL file")
-    parser.add_argument("--requests_filepath")
-    parser.add_argument("--save_filepath", default=None)
-    parser.add_argument("--request_url", default="https://api.openai.com/v1/chat/completions")
-    parser.add_argument("--api_key", default="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")
-    parser.add_argument("--max_requests_per_minute", type=int, default=200 * 0.9)
-    parser.add_argument("--max_tokens_per_minute", type=int, default=40_000 * 0.9)
-    parser.add_argument("--token_encoding_name", default="cl100k_base")
-    parser.add_argument("--max_attempts", type=int, default=30)
-    parser.add_argument("--logging_level", default=logging.INFO)
-    args = parser.parse_args()
-    
+def process_requests(input_file, request_url="https://api.openai.com/v1/chat/completions", 
+                    api_key="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", 
+                     max_requests_per_minute=200 * 0.9, max_tokens_per_minute=40_000 * 0.9, 
+                    token_encoding_name="cl100k_base", max_attempts=30, logging_level=logging.INFO):
 
     gpt_model = "gpt-4-0613"
     temperature = 0.5   
@@ -412,25 +399,14 @@ if __name__ == "__main__":
     experiment_name = f'explain_then_score'
     base_path = os.path.expanduser("~/misinfo/misinfo_explainability/")
 
-    
-    input_df = pd.read_json(args.input_file, lines=True)
+    input_df = pd.read_json(input_file, lines=True)
 
-    input_df['example_id'] = input_df.index # index usually easiest, but in theory can be anything unique, e.g. the input text itself if that won't be duplicated
+    input_df['example_id'] = input_df.index
 
-    # this bit is for restarting if stopped partway through, e.g. cluster job timeout
     save_filepath = f'{base_path}/{experiment_name}_{gpt_model}_temp{temperature}_rawoutput.jsonl'
-    """if os.path.exists(save_filepath):
-        reload_df = pd.read_json(save_filepath, lines=True, orient='records')
-        input_df = input_df[~input_df.example_id.isin(reload_df[0])]"""
-    # print('input_df after reload', input_df.shape)
-    
-    # this function to set up the prompt
+
     def text_to_messages(row):
         text = row['text']
-
-        # score_then_explain
-        # tmp_prompt = f'Rate the truthfulness of the following statement: "{text}" \
-        #             Provide a score from 0 to 100, where 0 represents definitively false and 100 represents definitively true. Then write a vertical bar "|", followed by explaining your reasoning for the score.'
 
         tmp_prompt = f'Rate the truthfulness of the following statement: "{text}" \
                     Your task is to provide a score from 0 to 100, where 0 represents definitively false and 100 represents definitively true, but you must not state your score until you\'ve presented a thorough analysis. Do not begin your response with a number. First write your analysis, then write a vertical bar "|", then finally state your score.'
@@ -440,28 +416,25 @@ if __name__ == "__main__":
     input_df['messages'] = input_df.apply(lambda row: text_to_messages(row), axis=1)
     input_df['temperature'] = temperature
     input_df['model'] = gpt_model
-    input_df['max_tokens'] = 1000 # maximum tokens in the response
+    input_df['max_tokens'] = 1000
 
     requests_filepath = f'{base_path}/{experiment_name}_{gpt_model}_temp{temperature}_preprocessedforparallel.jsonl'
-    input_df[['example_id','messages', 'temperature','model', 'max_tokens']].to_json(requests_filepath, lines=True, orient='records') # only fields gpt is expecting + example_id
-    input_df.to_json(requests_filepath.split('.jsonl')[0] + 'full.jsonl', lines=True, orient='records') # not really needed, just record of the full input df
+    input_df[['example_id','messages', 'temperature','model', 'max_tokens']].to_json(requests_filepath, lines=True, orient='records')
+    input_df.to_json(requests_filepath.split('.jsonl')[0] + 'full.jsonl', lines=True, orient='records')
 
-    # run script
     results = asyncio.run(
     process_api_requests_from_file(
         requests_filepath=requests_filepath,
-        request_url=args.request_url,
-        api_key=args.api_key,
-        max_requests_per_minute=float(args.max_requests_per_minute),
-        max_tokens_per_minute=float(args.max_tokens_per_minute),
-        token_encoding_name=args.token_encoding_name,
-        max_attempts=int(args.max_attempts),
-        logging_level=int(args.logging_level),
+        request_url=request_url,
+        api_key=api_key,
+        max_requests_per_minute=float(max_requests_per_minute),
+        max_tokens_per_minute=float(max_tokens_per_minute),
+        token_encoding_name=token_encoding_name,
+        max_attempts=int(max_attempts),
+        logging_level=int(logging_level),
     )
 )
 
-
-        # match things back together with example_id, and also get rid of unneeded metadata in the gpt response
     output_df = pd.DataFrame(results)
     def get_gpt_output(gpt_response):
         return gpt_response["choices"][0]["message"]["content"]
@@ -474,15 +447,11 @@ if __name__ == "__main__":
     output_df['completion_tokens'] = output_df[2].apply(lambda x: x['usage']['completion_tokens'])
     output_df = output_df[['example_id','gpt-answer', 'gpt-message', 'prompt_tokens', 'completion_tokens']]
     combined_df = input_df.merge(output_df, on='example_id')
-    output_df = pd.DataFrame(results)
 
-    # Convert the DataFrame to JSON and print the JSON output
-    json_output = combined_df.to_json(orient="records", lines=True)
-    print(json_output)
+    return combined_df
     # import subprocess
 
     # result = subprocess.run(['python', 'evaluate.py', '--experiment_name', experiment_name], capture_output=True, text=True)
 
     # print(result.stdout)
-
 
