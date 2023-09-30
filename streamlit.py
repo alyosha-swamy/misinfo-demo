@@ -59,7 +59,7 @@ def st_stderr(dst):
         yield
 
 def run_script(user_inputs):
-    # Create a DataFrame from the user inputs
+    
     input_df = pd.DataFrame([{"text": text} for text in user_inputs])
     input_file = 'input_temp.jsonl'
     with open(input_file, 'w') as f:
