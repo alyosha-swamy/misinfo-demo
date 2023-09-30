@@ -72,21 +72,28 @@ def run_script(user_inputs):
         os.remove(input_file)
 
     return stdout.splitlines(), stderr
+from openai_example_parallel import process_requests
 
-
-@st.cache(allow_output_mutation=True)
 def get_analysis_and_score(user_input):
-    stdout_lines, stderr = run_script([user_input])
-    for idx, stdout in enumerate(stdout_lines):
-        if is_json(stdout): 
-            output_json = json.loads(stdout)
-            gpt_answer = output_json['gpt-answer']
-            if " | " in gpt_answer:
-                analysis, score = gpt_answer.split(" | ")
-            else:
-                analysis = gpt_answer
-                score = "Score not provided"
-    return analysis, score
+    # Create a DataFrame from the user inputs
+    input_df = pd.DataFrame([{"text": text} for text in [user_input]])
+    input_file = 'input_temp.jsonl'
+    with open(input_file, 'w') as f:
+        f.write(input_df.to_json(orient='records', lines=True))
+
+    combined_df = process_requests(input_file)
+    
+    if os.path.exists(input_file):  # Cleanup
+        os.remove(input_file)
+
+    # Extract 'gpt-answer' from the DataFrame
+    gpt_answer = combined_df['gpt-answer'].values[0]
+
+    if " | " in gpt_answer:
+        analysis, score = gpt_answer.split(" | ")
+        return analysis, score
+
+    return "No analysis found.", "No score provided."
 
 
 @st.cache(suppress_st_warning=True)
