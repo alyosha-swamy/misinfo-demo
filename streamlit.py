@@ -4,6 +4,8 @@ from datetime import datetime
 from typing import Dict
 import json
 import os
+import re
+
 
 default_session_state = {
     'feedback_score': None,
@@ -34,7 +36,21 @@ followed by your internal scores in the format Verifiability:1/3|Sourcing:2/3|..
     output_text = response['choices'][0]['message']['content'].strip()
 
     # Split the output to get the analysis, the score, and the internal_scores
-    analysis, score, internal_scores_str = output_text.split("|", 2)
+
+    num_bars = output_text.count('|')
+
+    # Split the string based on the number of vertical bars
+    split_text = re.split(r'\|', output_text, num_bars)
+
+    # Depending on the number of vertical bars, assign the split text to variables
+    if num_bars == 2:
+        analysis, score, internal_scores_str = split_text
+    elif num_bars == 1:
+        analysis, score = split_text
+        internal_scores_str = None
+    else:
+        analysis = split_text[0]
+        score = internal_scores_str = None
 
     # Extracting the numerical score and its denominator from the score string
     import re
