@@ -7,7 +7,7 @@ import os
 import re
 from dotenv import load_dotenv
 
-api_key = st.secrets["OPENAI_API_KEY"]
+api_key = st.secrets["api_key"]
 
 
 default_session_state = {
