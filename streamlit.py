@@ -5,6 +5,10 @@ from typing import Dict
 import json
 import os
 import re
+from dotenv import load_dotenv
+
+load_dotenv()  # take environment variables from .env.
+api_key = os.getenv("OPENAI_API_KEY")
 
 
 default_session_state = {
