@@ -88,7 +88,6 @@ if st.button('Evaluate Statement', on_click=lambda: setattr(st.session_state, 'e
 
 if st.session_state.evaluate_statement:
     if statement:
-        api_key = "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"  # Replace with your actual API key
         result = evaluate_misinformation(statement, api_key)
 
         st.write(f"Analysis: {result['analysis']}")
