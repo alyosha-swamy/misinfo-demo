@@ -32,21 +32,13 @@ followed by your internal scores in the format Verifiability:1/3|Sourcing:2/3|..
         messages=[{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": prompt}],
         max_tokens=300
     )
-
+    out_of = None
     output_text = response['choices'][0]['message']['content'].strip()
-
-    # Split the output to get the analysis, the score, and the internal_scores
     analysis, score, internal_scores_str = output_text.split("|", 2)
 
-    # Extracting the numerical score and its denominator from the score string
-    import re
-    match = re.search(r'(\d+)/(\d+)', score)
-    if match:
-        score, out_of = map(int, match.groups())
-    else:
-        score, out_of = None, None
+    # Split the output to get the analysis, the score, and the internal_scores
 
-        # Process the internal_scores string into a dictionary
+    
     internal_scores = {}
     for item in internal_scores_str.split("|"):
         if ":" in item:
