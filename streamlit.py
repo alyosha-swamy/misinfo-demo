@@ -7,8 +7,7 @@ import os
 import re
 from dotenv import load_dotenv
 
-load_dotenv()  # take environment variables from .env.
-api_key = os.getenv("OPENAI_API_KEY")
+api_key = st.secrets["OPENAI_API_KEY"]
 
 
 default_session_state = {
