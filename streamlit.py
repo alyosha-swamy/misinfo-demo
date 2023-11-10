@@ -51,7 +51,7 @@ followed by your internal scores in the format Verifiability:1/3|Sourcing:2/3|..
     internal_scores = {}
     for item in internal_scores_str.split("|"):
         if ":" in item:
-            metric, value = item.split(":")
+            metric, value = item.split(":", 1)
             internal_scores[metric.strip()] = value.strip()
 
     return {
